@@ -1,37 +1,401 @@
 {
-  "meta": { "engine": "three", "fps": 30, "shadowCenter": [0, 0, 0], "shadowSize": 10,
-            "post": { "ao": true, "bloom": true } },
-  "palette": { "sun": [-0.45, 0.6, 0.45], "sunIntensity": 2.8, "exposure": 0.55, "fogDensity": 0.006 },
-  "objects": [
-    { "id": "tanah", "type": "box", "pos": [0, -0.1, 0], "size": [120, 0.2, 120], "color": "#7d8f5a", "rough": 0.95 },
-    { "id": "meja", "type": "box", "pos": [0, 0.375, 0], "size": [1.6, 0.75, 0.8], "color": "#8a5a36", "rough": 0.6 },
-    { "id": "botol", "prefab": "botol_kaca", "pos": [0, 0.75, 0],
-      "parts": { "gabus": { "show": [[3.6, 8.3]] }, "tutup": { "show": [[8.3, 60]] } } },
-    { "id": "hero", "prefab": "manekin", "pos": [-1.0, 0, 1.0], "rot": [0, 55, 0] },
-    { "id": "pohon1", "prefab": "pohon", "pos": [5, 0, -4] },
-    { "id": "rumah", "prefab": "rumah", "pos": [3.5, 0, -7], "rot": [0, -15, 0] },
-    { "id": "papan", "type": "box", "pos": [-2.4, 1.3, -1.5], "rot": [0, 25, 0], "size": [1.6, 0.8, 0.08],
-      "color": "#1d3557", "text": "MEN'S GIBRIG", "textColor": "#ffffff" }
+ "meta": {
+  "engine": "three",
+  "fps": 30,
+  "shadowCenter": [
+   0,
+   0,
+   0
   ],
-  "tracks": [
-    { "id": "hero", "keys": [ { "t": 0, "pos": [-2.4, 0, 2.2] }, { "t": 3.5, "pos": [-1.0, 0, 1.0] } ] },
-    { "id": "botol", "keys": [ { "t": 11, "rot": [0, 0, 0] }, { "t": 17, "rot": [0, 360, 0] } ] }
+  "shadowSize": 10,
+  "post": {
+   "ao": true,
+   "bloom": true
+  }
+ },
+ "palette": {
+  "sun": [
+   -0.45,
+   0.6,
+   0.45
   ],
-  "shots": [
-    { "t": 0,  "dur": 4, "a": { "pos": [-4, 2.0, 6],     "target": [-0.5, 1.0, 0], "fov": 40 },
-                         "b": { "pos": [-2.6, 1.7, 4.2], "target": [-0.3, 1.0, 0], "fov": 38 } },
-    { "t": 4,  "dur": 4, "a": { "pos": [0.9, 1.15, 1.3],  "target": [0, 0.92, 0], "fov": 30 },
-                         "b": { "pos": [0.6, 1.05, 0.9],  "target": [0, 0.92, 0], "fov": 26 } },
-    { "t": 8,  "dur": 4, "a": { "pos": [0.35, 1.0, 0.45], "target": [0, 1.0, 0], "fov": 24 },
-                         "b": { "pos": [0.22, 1.02, 0.3], "target": [0, 1.02, 0], "fov": 20 } },
-    { "t": 12, "dur": 5, "a": { "pos": [2.2, 1.4, 2.6],   "target": [0, 0.95, 0], "fov": 36 },
-                         "b": { "pos": [-1.6, 1.5, 2.8],  "target": [0, 0.95, 0], "fov": 36 } },
-    { "t": 17, "dur": 4, "a": { "pos": [-1.5, 3, 6],      "target": [0, 0.9, 0], "fov": 44 },
-                         "b": { "pos": [0, 6, 9],         "target": [0, 0.6, 0], "fov": 44 } }
-  ],
-  "labels": [
-    { "t": 3.8,  "dur": 2.2, "text": "GABUS", "kind": "red",  "y": 0.2 },
-    { "t": 10.3, "dur": 2.4, "text": "1892",  "kind": "red",  "y": 0.2 },
-    { "t": 13.5, "dur": 2.6, "text": "TERTUTUP RAPAT", "kind": "blue", "y": 0.2 }
-  ]
+  "sunIntensity": 2.8,
+  "exposure": 0.55,
+  "fogDensity": 0.006
+ },
+ "objects": [
+  {
+   "id": "tanah",
+   "type": "box",
+   "pos": [
+    0,
+    -0.1,
+    0
+   ],
+   "size": [
+    120,
+    0.2,
+    120
+   ],
+   "color": "#7d8f5a",
+   "rough": 0.95
+  },
+  {
+   "id": "meja",
+   "type": "box",
+   "pos": [
+    0,
+    0.375,
+    0
+   ],
+   "size": [
+    1.6,
+    0.75,
+    0.8
+   ],
+   "color": "#8a5a36",
+   "rough": 0.6
+  },
+  {
+   "id": "botol",
+   "prefab": "botol_kaca",
+   "pos": [
+    0,
+    0.75,
+    0
+   ],
+   "parts": {
+    "gabus": {
+     "show": [
+      [
+       3.6,
+       8.3
+      ]
+     ]
+    },
+    "tutup": {
+     "show": [
+      [
+       8.3,
+       60
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "id": "pohon1",
+   "prefab": "pohon",
+   "pos": [
+    5,
+    0,
+    -4
+   ]
+  },
+  {
+   "id": "rumah",
+   "prefab": "rumah",
+   "pos": [
+    3.5,
+    0,
+    -7
+   ],
+   "rot": [
+    0,
+    -15,
+    0
+   ]
+  },
+  {
+   "id": "papan",
+   "type": "box",
+   "pos": [
+    -2.4,
+    1.3,
+    -1.5
+   ],
+   "rot": [
+    0,
+    25,
+    0
+   ],
+   "size": [
+    1.6,
+    0.8,
+    0.08
+   ],
+   "color": "#1d3557",
+   "text": "MEN'S GIBRIG",
+   "textColor": "#ffffff"
+  },
+  {
+   "id": "cowok",
+   "glb": "assets/GIBRIG_MAN_CURLY.glb",
+   "fitHeight": 1.75,
+   "pos": [
+    -1.5,
+    0,
+    0.6
+   ],
+   "rot": [
+    0,
+    25,
+    0
+   ],
+   "clips": [
+    {
+     "t": 0,
+     "name": "Idle"
+    },
+    {
+     "t": 4.5,
+     "name": "Wave"
+    }
+   ]
+  },
+  {
+   "id": "cewek",
+   "glb": "assets/GIBRIG_WOMAN_HIJAB.glb",
+   "fitHeight": 1.62,
+   "pos": [
+    1.5,
+    0,
+    0.7
+   ],
+   "rot": [
+    0,
+    -25,
+    0
+   ],
+   "clips": [
+    {
+     "t": 0,
+     "name": "Idle"
+    },
+    {
+     "t": 9,
+     "name": "Wave"
+    }
+   ]
+  },
+  {
+   "id": "anak",
+   "glb": "assets/GIBRIG_BOY_ORANGE.glb",
+   "fitHeight": 1.15,
+   "pos": [
+    0.9,
+    0,
+    1.5
+   ],
+   "rot": [
+    0,
+    -10,
+    0
+   ],
+   "clips": [
+    {
+     "t": 0,
+     "name": "Idle"
+    }
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "id": "botol",
+   "keys": [
+    {
+     "t": 11,
+     "rot": [
+      0,
+      0,
+      0
+     ]
+    },
+    {
+     "t": 17,
+     "rot": [
+      0,
+      360,
+      0
+     ]
+    }
+   ]
+  }
+ ],
+ "shots": [
+  {
+   "t": 0,
+   "dur": 4,
+   "a": {
+    "pos": [
+     -4,
+     2.0,
+     6
+    ],
+    "target": [
+     -0.5,
+     1.0,
+     0
+    ],
+    "fov": 40
+   },
+   "b": {
+    "pos": [
+     -2.6,
+     1.7,
+     4.2
+    ],
+    "target": [
+     -0.3,
+     1.0,
+     0
+    ],
+    "fov": 38
+   }
+  },
+  {
+   "t": 4,
+   "dur": 4,
+   "a": {
+    "pos": [
+     0.9,
+     1.15,
+     1.3
+    ],
+    "target": [
+     0,
+     0.92,
+     0
+    ],
+    "fov": 30
+   },
+   "b": {
+    "pos": [
+     0.6,
+     1.05,
+     0.9
+    ],
+    "target": [
+     0,
+     0.92,
+     0
+    ],
+    "fov": 26
+   }
+  },
+  {
+   "t": 8,
+   "dur": 4,
+   "a": {
+    "pos": [
+     0.35,
+     1.0,
+     0.45
+    ],
+    "target": [
+     0,
+     1.0,
+     0
+    ],
+    "fov": 24
+   },
+   "b": {
+    "pos": [
+     0.22,
+     1.02,
+     0.3
+    ],
+    "target": [
+     0,
+     1.02,
+     0
+    ],
+    "fov": 20
+   }
+  },
+  {
+   "t": 12,
+   "dur": 5,
+   "a": {
+    "pos": [
+     2.2,
+     1.4,
+     2.6
+    ],
+    "target": [
+     0,
+     0.95,
+     0
+    ],
+    "fov": 36
+   },
+   "b": {
+    "pos": [
+     -1.6,
+     1.5,
+     2.8
+    ],
+    "target": [
+     0,
+     0.95,
+     0
+    ],
+    "fov": 36
+   }
+  },
+  {
+   "t": 17,
+   "dur": 4,
+   "a": {
+    "pos": [
+     -1.5,
+     3,
+     6
+    ],
+    "target": [
+     0,
+     0.9,
+     0
+    ],
+    "fov": 44
+   },
+   "b": {
+    "pos": [
+     0,
+     6,
+     9
+    ],
+    "target": [
+     0,
+     0.6,
+     0
+    ],
+    "fov": 44
+   }
+  }
+ ],
+ "labels": [
+  {
+   "t": 3.8,
+   "dur": 2.2,
+   "text": "GABUS",
+   "kind": "red",
+   "y": 0.2
+  },
+  {
+   "t": 10.3,
+   "dur": 2.4,
+   "text": "1892",
+   "kind": "red",
+   "y": 0.2
+  },
+  {
+   "t": 13.5,
+   "dur": 2.6,
+   "text": "TERTUTUP RAPAT",
+   "kind": "blue",
+   "y": 0.2
+  }
+ ]
 }
