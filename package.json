@@ -1,0 +1,6 @@
+{
+  "name": "gibrig-template",
+  "private": true,
+  "description": "Template render explainer 3D (WebGL2 + Playwright + ffmpeg)",
+  "dependencies": { "playwright": "^1.49.0" }
+}

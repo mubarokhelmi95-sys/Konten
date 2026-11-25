@@ -1,0 +1,9 @@
+{
+  "defaults": { "wall": "#e8dcc4", "roof": "#b5442f", "door": "#6b4a2f" },
+  "parts": [
+    { "id": "wall", "type": "box", "pos": [0, 1.2, 0], "size": [4, 2.4, 3.2], "color": "$wall" },
+    { "id": "roof_l", "type": "box", "pos": [-1.05, 2.9, 0], "rot": [0, 0, 32], "size": [2.6, 0.15, 3.6], "color": "$roof" },
+    { "id": "roof_r", "type": "box", "pos": [1.05, 2.9, 0], "rot": [0, 0, -32], "size": [2.6, 0.15, 3.6], "color": "$roof" },
+    { "id": "door", "type": "box", "pos": [0, 0.8, 1.61], "size": [0.9, 1.6, 0.06], "color": "$door" }
+  ]
+}

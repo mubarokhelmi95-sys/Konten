@@ -1,0 +1,59 @@
+name: render-video
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Nama folder di projects/ (contoh: contoh)"
+        required: true
+        default: contoh
+      preview:
+        description: "Preview murah (setengah resolusi, 10 fps)"
+        type: boolean
+        default: true
+
+env:
+  PROJECT: projects/${{ inputs.project }}
+  STEP: ${{ inputs.preview && '3' || '1' }}
+  PREVIEW_FLAG: ${{ inputs.preview && '--preview' || '' }}
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Subtitle dari audio
+        run: python3 tools/make_subs.py "$PROJECT"
+      - name: Render frame (shard ${{ matrix.shard }}/4)
+        run: node tools/render.js --project "$PROJECT" --out frames --shard ${{ matrix.shard }} --shards 4 $PREVIEW_FLAG
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frames-${{ matrix.shard }}
+          path: frames
+          retention-days: 1
+
+  assemble:
+    needs: render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: frames-*
+          merge-multiple: true
+          path: frames
+      - run: python3 tools/assemble.py "$PROJECT" frames out/video.mp4 "$STEP"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ inputs.project }}${{ inputs.preview && '-preview' || '' }}
+          path: out/video.mp4

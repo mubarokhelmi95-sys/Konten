@@ -1,0 +1,18 @@
+{
+  "defaults": { "skin": "#c9a37a", "shirt": "#f2f2ee", "pants": "#4a5a7a", "shoe": "#3b2f2a" },
+  "parts": [
+    { "id": "torso",  "type": "box", "pos": [0, 1.2, 0],  "size": [0.44, 0.62, 0.25], "color": "$shirt" },
+    { "id": "head",   "type": "sphere", "pos": [0, 1.66, 0], "size": [0.24, 0.28, 0.24], "color": "$skin" },
+    { "id": "neck",   "type": "cyl", "pos": [0, 1.5, 0], "size": [0.09, 0.1, 0.09], "color": "$skin" },
+    { "id": "arm_l",  "type": "group", "pos": [-0.29, 1.46, 0] },
+    { "id": "arm_l_m","type": "cyl", "parent": "arm_l", "pos": [0, -0.28, 0], "size": [0.11, 0.58, 0.11], "color": "$shirt" },
+    { "id": "arm_r",  "type": "group", "pos": [0.29, 1.46, 0] },
+    { "id": "arm_r_m","type": "cyl", "parent": "arm_r", "pos": [0, -0.28, 0], "size": [0.11, 0.58, 0.11], "color": "$shirt" },
+    { "id": "leg_l",  "type": "group", "pos": [-0.11, 0.9, 0] },
+    { "id": "leg_l_m","type": "cyl", "parent": "leg_l", "pos": [0, -0.43, 0], "size": [0.16, 0.86, 0.16], "color": "$pants" },
+    { "id": "leg_l_s","type": "box", "parent": "leg_l", "pos": [0, -0.9, 0.04], "size": [0.15, 0.1, 0.26], "color": "$shoe" },
+    { "id": "leg_r",  "type": "group", "pos": [0.11, 0.9, 0] },
+    { "id": "leg_r_m","type": "cyl", "parent": "leg_r", "pos": [0, -0.43, 0], "size": [0.16, 0.86, 0.16], "color": "$pants" },
+    { "id": "leg_r_s","type": "box", "parent": "leg_r", "pos": [0, -0.9, 0.04], "size": [0.15, 0.1, 0.26], "color": "$shoe" }
+  ]
+}

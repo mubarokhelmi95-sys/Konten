@@ -1,0 +1,9 @@
+{
+  "defaults": { "trunk": "#7a5636", "leaf": "#3f8a3a" },
+  "parts": [
+    { "id": "trunk", "type": "cyl", "pos": [0, 1.5, 0], "size": [0.45, 3, 0.45], "color": "$trunk" },
+    { "id": "l1", "type": "sphere", "pos": [0, 3.6, 0], "size": [2.6, 2.2, 2.6], "color": "$leaf" },
+    { "id": "l2", "type": "sphere", "pos": [0.9, 3.1, 0.3], "size": [1.8, 1.6, 1.8], "color": "$leaf" },
+    { "id": "l3", "type": "sphere", "pos": [-0.8, 3.2, -0.3], "size": [1.7, 1.5, 1.7], "color": "$leaf" }
+  ]
+}

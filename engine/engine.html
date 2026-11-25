@@ -1,0 +1,375 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#000;overflow:hidden}
+  #stage{position:relative;overflow:hidden;font-family:'Poppins',system-ui,sans-serif}
+  canvas{display:block;position:absolute;left:0;top:0}
+  #sub{position:absolute;left:0;right:0;text-align:center;color:#fff;font-weight:600;
+       text-shadow:0 2px 10px rgba(0,0,0,.55),0 0 3px rgba(0,0,0,.5);transform:translateY(-50%);white-space:nowrap}
+  .lab{position:absolute;transform:translate(-50%,-50%);color:#fff;font-weight:700;letter-spacing:.02em;
+       border:2px solid #fff;border-radius:6px;white-space:nowrap}
+  .lab.red{background:#d62828}.lab.blue{background:#1d6fd8}.lab.plain{background:rgba(0,0,0,.55)}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="cv"></canvas><div id="sub"></div><div id="labs"></div></div>
+<script>
+/* ============================================================
+   Engine WebGL2 mentah (tanpa three.js) untuk template MEN'S GIBRIG.
+   Isi adegan ada di projects/<nama>/scene.json, engine ini tidak perlu diubah.
+   URL: engine.html?project=projects/contoh&w=720&h=1280
+   Playwright memanggil window.renderFrame(t) per frame.
+   ============================================================ */
+(async () => {
+const q = new URLSearchParams(location.search);
+const PROJ = q.get('project') || 'projects/contoh';
+const W = +q.get('w') || 720, H = +q.get('h') || 1280;
+
+const stage = document.getElementById('stage');
+stage.style.width = W + 'px'; stage.style.height = H + 'px';
+const cv = document.getElementById('cv'); cv.width = W; cv.height = H;
+const subEl = document.getElementById('sub');
+subEl.style.fontSize = (H * 0.037) + 'px'; subEl.style.top = (H * 0.645) + 'px';
+const labsEl = document.getElementById('labs');
+
+async function jget(u, optional) {
+  const r = await fetch(u);
+  if (!r.ok) { if (optional) return null; throw new Error(u + ' -> ' + r.status); }
+  return r.json();
+}
+
+/* ---------- matematika ---------- */
+const V = {
+  sub: (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]],
+  add: (a, b) => [a[0]+b[0], a[1]+b[1], a[2]+b[2]],
+  mul: (a, s) => [a[0]*s, a[1]*s, a[2]*s],
+  dot: (a, b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+  cross: (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]],
+  norm: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0]/l, a[1]/l, a[2]/l]; },
+  lerp: (a, b, t) => [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t],
+};
+const M = {
+  id: () => [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1],
+  mul(a, b) { const o = new Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      let s = 0; for (let k = 0; k < 4; k++) s += a[k*4+r] * b[c*4+k]; o[c*4+r] = s; }
+    return o; },
+  T: p => [1,0,0,0, 0,1,0,0, 0,0,1,0, p[0],p[1],p[2],1],
+  S: s => [s[0],0,0,0, 0,s[1],0,0, 0,0,s[2],0, 0,0,0,1],
+  Rx: a => { const c = Math.cos(a), s = Math.sin(a); return [1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1]; },
+  Ry: a => { const c = Math.cos(a), s = Math.sin(a); return [c,0,-s,0, 0,1,0,0, s,0,c,0, 0,0,0,1]; },
+  Rz: a => { const c = Math.cos(a), s = Math.sin(a); return [c,s,0,0, -s,c,0,0, 0,0,1,0, 0,0,0,1]; },
+  // urutan: T * Ry * Rx * Rz * S  (rot dalam derajat: [x,y,z])
+  trs(p, r, s) {
+    const d = Math.PI / 180;
+    let m = M.S(s);
+    m = M.mul(M.Rz(r[2]*d), m); m = M.mul(M.Rx(r[0]*d), m); m = M.mul(M.Ry(r[1]*d), m);
+    return M.mul(M.T(p), m);
+  },
+  persp(fovDeg, asp, n, f) { const t = 1 / Math.tan(fovDeg * Math.PI / 360);
+    return [t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)/(n-f),-1, 0,0,2*f*n/(n-f),0]; },
+  ortho(l, r, b, t, n, f) {
+    return [2/(r-l),0,0,0, 0,2/(t-b),0,0, 0,0,-2/(f-n),0, -(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n),1]; },
+  look(e, c, up) {
+    const z = V.norm(V.sub(e, c)), x = V.norm(V.cross(up, z)), y = V.cross(z, x);
+    return [x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0, -V.dot(x,e),-V.dot(y,e),-V.dot(z,e),1]; },
+};
+const ease = (k, t) => k === 'linear' ? t : t * t * (3 - 2 * t);
+const clamp01 = x => Math.min(1, Math.max(0, x));
+const lin = h => { // "#rrggbb" -> linear rgb
+  const n = parseInt(h.replace('#', ''), 16);
+  return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255].map(v => Math.pow(v, 2.2)); };
+
+/* ---------- scene + prefab ---------- */
+const scene = await jget('/' + PROJ + '/scene.json');
+const subsData = await jget('/' + PROJ + '/subs.json', true) || { cards: [], audio_duration: 0 };
+const meta = Object.assign({ fps: 30 }, scene.meta || {});
+const pal = Object.assign({
+  skyTop: '#3f8fd6', skyHorizon: '#d4e8f5', ambientSky: '#9fb8d0', ambientGround: '#7a6a50',
+  sun: [-0.45, 0.75, 0.4], sunColor: '#fff0d2', sunStrength: 1.5, fogDensity: 0.012,
+}, scene.palette || {});
+
+const prefabCache = {};
+async function prefab(name) {
+  if (!prefabCache[name]) prefabCache[name] = await jget('/engine/prefabs/' + name + '.json');
+  return prefabCache[name];
+}
+const objs = [];
+for (const o of scene.objects || []) {
+  if (!o.prefab) { objs.push(Object.assign({}, o)); continue; }
+  const pf = await prefab(o.prefab);
+  const cols = Object.assign({}, pf.defaults, o.colors);
+  objs.push({ id: o.id, type: 'group', pos: o.pos, rot: o.rot, size: o.size || [1,1,1], parent: o.parent, show: o.show });
+  for (const p of pf.parts) {
+    const c = typeof p.color === 'string' && p.color[0] === '$' ? cols[p.color.slice(1)] : p.color;
+    objs.push(Object.assign({}, p, { id: o.id + '.' + p.id, parent: p.parent ? o.id + '.' + p.parent : o.id, color: c }));
+  }
+}
+const byId = {};
+for (const o of objs) {
+  o.pos = o.pos || [0,0,0]; o.rot = o.rot || [0,0,0]; o.size = o.size || [1,1,1];
+  o.base = { pos: o.pos.slice(), rot: o.rot.slice(), size: o.size.slice() };
+  o.cur = { pos: o.pos.slice(), rot: o.rot.slice(), size: o.size.slice() };
+  o.rgb = lin(o.color || '#cccccc');
+  byId[o.id] = o;
+}
+
+/* ---------- GL ---------- */
+const gl = cv.getContext('webgl2', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+if (!gl) throw new Error('WebGL2 tidak tersedia');
+
+function prog(vs, fs) {
+  const mk = (t, s) => { const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)); return sh; };
+  const p = gl.createProgram(); gl.attachShader(p, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const cache = {}; p.u = n => cache[n] !== undefined ? cache[n] : (cache[n] = gl.getUniformLocation(p, n)); return p;
+}
+const ACES = `vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}`;
+
+const pMain = prog(`#version 300 es
+layout(location=0) in vec3 aPos; layout(location=1) in vec3 aN; layout(location=2) in vec2 aUV;
+uniform mat4 uVP,uModel,uLVP;
+out vec3 vW,vN; out vec2 vUV; out vec4 vL;
+void main(){ vec4 w=uModel*vec4(aPos,1.); vW=w.xyz; vN=normalize(transpose(inverse(mat3(uModel)))*aN);
+  vUV=aUV; vL=uLVP*w; gl_Position=uVP*w; }`,
+`#version 300 es
+precision highp float; precision highp sampler2DShadow;
+in vec3 vW,vN; in vec2 vUV; in vec4 vL;
+uniform vec3 uColor,uSun,uSunCol,uSkyA,uGndA,uFog,uCam; uniform float uFogD,uTexOn,uTexel;
+uniform sampler2D uTex; uniform sampler2DShadow uSh;
+out vec4 o;
+${ACES}
+float hash(vec3 p){p=fract(p*0.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+void main(){
+  vec3 N=normalize(vN);
+  vec3 base=uColor;
+  if(uTexOn>.5) base=pow(texture(uTex,vUV).rgb,vec3(2.2));
+  base*=0.97+0.06*hash(floor(vW*8.));
+  vec3 lp=vL.xyz/vL.w*.5+.5; float sh=0.;
+  for(int i=-1;i<=1;i++)for(int j=-1;j<=1;j++) sh+=texture(uSh,vec3(lp.xy+vec2(float(i),float(j))*uTexel,lp.z-0.002));
+  sh/=9.; if(lp.x<0.||lp.x>1.||lp.y<0.||lp.y>1.||lp.z>1.) sh=1.;
+  float ndl=max(dot(N,uSun),0.);
+  vec3 c=base*(mix(uGndA,uSkyA,N.y*.5+.5)+uSunCol*ndl*sh);
+  c=mix(c,uFog,1.-exp(-length(vW-uCam)*uFogD));
+  o=vec4(pow(aces(c),vec3(1./2.2)),1.);
+}`);
+
+const pShadow = prog(`#version 300 es
+layout(location=0) in vec3 aPos; uniform mat4 uLVP,uModel; void main(){gl_Position=uLVP*uModel*vec4(aPos,1.);}`,
+`#version 300 es
+precision highp float; void main(){}`);
+
+const pSky = prog(`#version 300 es
+out vec2 vP; void main(){ vec2 p=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2)); vP=p*2.-1.; gl_Position=vec4(vP,.999,1.);}`,
+`#version 300 es
+precision highp float; in vec2 vP; out vec4 o;
+uniform vec3 uF,uR,uU,uTop,uHor,uSun,uSunCol; uniform float uTan,uAsp;
+${ACES}
+void main(){ vec3 d=normalize(uF+uR*vP.x*uTan*uAsp+uU*vP.y*uTan);
+  float t=clamp(d.y*1.8+.08,0.,1.); vec3 c=mix(uHor,uTop,pow(t,.7));
+  c+=uSunCol*pow(max(dot(d,uSun),0.),300.)*2.;
+  o=vec4(pow(aces(c),vec3(1./2.2)),1.); }`);
+
+/* ---------- mesh primitif ---------- */
+function mesh(vert, idx) {
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vert), gl.STATIC_DRAW);
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(idx), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 12);
+  gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 24);
+  gl.bindVertexArray(null); return { vao, n: idx.length };
+}
+function cube() {
+  const F = [[[1,0,0],[0,0,-1],[0,1,0]], [[-1,0,0],[0,0,1],[0,1,0]], [[0,1,0],[1,0,0],[0,0,-1]],
+             [[0,-1,0],[1,0,0],[0,0,1]], [[0,0,1],[1,0,0],[0,1,0]], [[0,0,-1],[-1,0,0],[0,1,0]]];
+  const v = [], i = []; let k = 0;
+  for (const [n, u, w] of F) {
+    for (const [a, b, uu, vv] of [[-1,-1,0,0],[1,-1,1,0],[1,1,1,1],[-1,1,0,1]]) {
+      v.push(n[0]*.5+u[0]*a*.5+w[0]*b*.5, n[1]*.5+u[1]*a*.5+w[1]*b*.5, n[2]*.5+u[2]*a*.5+w[2]*b*.5, ...n, uu, vv); }
+    i.push(k, k+1, k+2, k, k+2, k+3); k += 4;
+  }
+  return mesh(v, i);
+}
+function sphere(LAT = 18, LON = 32) {
+  const v = [], i = [];
+  for (let a = 0; a <= LAT; a++) for (let b = 0; b <= LON; b++) {
+    const th = Math.PI * a / LAT, ph = 2 * Math.PI * b / LON;
+    const n = [Math.sin(th)*Math.cos(ph), Math.cos(th), Math.sin(th)*Math.sin(ph)];
+    v.push(n[0]*.5, n[1]*.5, n[2]*.5, ...n, b / LON, 1 - a / LAT);
+  }
+  for (let a = 0; a < LAT; a++) for (let b = 0; b < LON; b++) {
+    const p = a * (LON + 1) + b, r = p + LON + 1;
+    i.push(p, p + 1, r, p + 1, r + 1, r);
+  }
+  return mesh(v, i);
+}
+function cyl(SEG = 32) {
+  const v = [], i = [];
+  for (let j = 0; j <= SEG; j++) {
+    const ph = 2 * Math.PI * j / SEG, c = Math.cos(ph), s = Math.sin(ph);
+    v.push(c*.5, .5, s*.5, c, 0, s, j / SEG, 1,  c*.5, -.5, s*.5, c, 0, s, j / SEG, 0);
+  }
+  for (let j = 0; j < SEG; j++) { const t0 = 2*j, b0 = 2*j+1, t1 = 2*j+2, b1 = 2*j+3;
+    i.push(t0, t1, b0, t1, b1, b0); }
+  const base = v.length / 8;
+  v.push(0, .5, 0, 0, 1, 0, .5, .5, 0, -.5, 0, 0, -1, 0, .5, .5);
+  const ringTop = v.length / 8, ringBot = ringTop + SEG + 1;
+  for (let j = 0; j <= SEG; j++) { const ph = 2*Math.PI*j/SEG, c = Math.cos(ph), s = Math.sin(ph);
+    v.push(c*.5, .5, s*.5, 0, 1, 0, c*.5+.5, s*.5+.5); }
+  for (let j = 0; j <= SEG; j++) { const ph = 2*Math.PI*j/SEG, c = Math.cos(ph), s = Math.sin(ph);
+    v.push(c*.5, -.5, s*.5, 0, -1, 0, c*.5+.5, s*.5+.5); }
+  for (let j = 0; j < SEG; j++) {
+    i.push(base, ringTop + j + 1, ringTop + j);
+    i.push(base + 1, ringBot + j, ringBot + j + 1);
+  }
+  return mesh(v, i);
+}
+const MESH = { box: cube(), sphere: sphere(), cyl: cyl() };
+
+/* ---------- tekstur teks (papan, logo, watermark di dunia 3D) ---------- */
+function textTex(o) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+  const x = c.getContext('2d'); x.fillStyle = o.color || '#ffffff'; x.fillRect(0, 0, 512, 256);
+  x.fillStyle = o.textColor || '#111111'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  let fs = 120; const f = s => `700 ${s}px Poppins, system-ui, sans-serif`;
+  x.font = f(fs); while (x.measureText(o.text).width > 470 && fs > 16) { fs -= 4; x.font = f(fs); }
+  x.fillText(o.text, 256, 132);
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  return t;
+}
+try { await document.fonts.load('700 40px Poppins'); await document.fonts.load('600 40px Poppins'); } catch (e) {}
+for (const o of objs) if (o.text) o.tex = textTex(o);
+
+/* ---------- bayangan ---------- */
+const SH = 2048;
+const shTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, shTex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, SH, SH, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+const shFbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, shTex, 0);
+gl.drawBuffers([gl.NONE]); gl.readBuffer(gl.NONE);
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+const skyVao = gl.createVertexArray();
+
+/* ---------- animasi ---------- */
+function applyTracks(t) {
+  for (const o of objs) { o.cur.pos = o.base.pos.slice(); o.cur.rot = o.base.rot.slice(); o.cur.size = o.base.size.slice(); }
+  for (const tr of scene.tracks || []) {
+    const o = byId[tr.id]; if (!o) continue;
+    for (const prop of ['pos', 'rot', 'size']) {
+      const ks = tr.keys.filter(k => k[prop]); if (!ks.length) continue;
+      if (t <= ks[0].t) { o.cur[prop] = ks[0][prop].slice(); continue; }
+      const last = ks[ks.length - 1];
+      if (t >= last.t) { o.cur[prop] = last[prop].slice(); continue; }
+      for (let i = 0; i < ks.length - 1; i++) if (t >= ks[i].t && t < ks[i+1].t) {
+        const u = ease(ks[i+1].ease || tr.ease || 'inout', (t - ks[i].t) / (ks[i+1].t - ks[i].t));
+        o.cur[prop] = V.lerp(ks[i][prop], ks[i+1][prop], u); break; }
+    }
+  }
+}
+function visible(o, t) {
+  for (let p = o; p; p = p.parent ? byId[p.parent] : null) {
+    if (p.show && !p.show.some(([a, b]) => t >= a && t < b)) return false;
+  }
+  return true;
+}
+function world(o) {
+  if (o._w) return o._w;
+  const local = M.trs(o.cur.pos, o.cur.rot, o.cur.size);
+  o._w = o.parent && byId[o.parent] ? M.mul(world(byId[o.parent]), local) : local; return o._w;
+}
+
+/* ---------- kamera ---------- */
+function camAt(t) {
+  const shots = (scene.shots || []).slice().sort((a, b) => a.t - b.t);
+  let s = shots[0];
+  for (const x of shots) if (x.t <= t) s = x;
+  if (!s) return { pos: [6, 3, 8], target: [0, 1, 0], fov: 45 };
+  const a = s.a || s.from, b = s.b || s.to || a;
+  const u = s.dur ? ease(s.ease || 'inout', clamp01((t - s.t) / s.dur)) : 0;
+  return { pos: V.lerp(a.pos, b.pos, u), target: V.lerp(a.target, b.target, u),
+           fov: (a.fov || 45) + ((b.fov || a.fov || 45) - (a.fov || 45)) * u };
+}
+
+/* ---------- gambar satu frame ---------- */
+function renderFrame(t) {
+  applyTracks(t); for (const o of objs) o._w = null;
+  const list = objs.filter(o => MESH[o.type] && visible(o, t));
+  const cam = camAt(t), asp = W / H;
+  const proj = M.persp(cam.fov, asp, 0.1, 300), view = M.look(cam.pos, cam.target, [0, 1, 0]);
+  const vp = M.mul(proj, view);
+  const sun = V.norm(pal.sun), ctr = meta.shadowCenter || [0, 0, 0], ext = meta.shadowSize || 25;
+  const lvp = M.mul(M.ortho(-ext, ext, -ext, ext, 1, 160), M.look(V.add(ctr, V.mul(sun, 70)), ctr, [0, 1, 0]));
+
+  // 1) bayangan
+  gl.bindFramebuffer(gl.FRAMEBUFFER, shFbo); gl.viewport(0, 0, SH, SH);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);
+  gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(2, 4);
+  gl.useProgram(pShadow); gl.uniformMatrix4fv(pShadow.u('uLVP'), false, lvp);
+  for (const o of list) { gl.uniformMatrix4fv(pShadow.u('uModel'), false, world(o));
+    const m = MESH[o.type]; gl.bindVertexArray(m.vao); gl.drawElements(gl.TRIANGLES, m.n, gl.UNSIGNED_SHORT, 0); }
+  gl.disable(gl.POLYGON_OFFSET_FILL);
+
+  // 2) langit
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
+  gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  const F = V.norm(V.sub(cam.target, cam.pos)), R = V.norm(V.cross(F, [0, 1, 0])), U = V.cross(R, F);
+  const top = lin(pal.skyTop), hor = lin(pal.skyHorizon), sunC = lin(pal.sunColor);
+  gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE); gl.useProgram(pSky);
+  gl.uniform3fv(pSky.u('uF'), F); gl.uniform3fv(pSky.u('uR'), R); gl.uniform3fv(pSky.u('uU'), U);
+  gl.uniform1f(pSky.u('uTan'), Math.tan(cam.fov * Math.PI / 360)); gl.uniform1f(pSky.u('uAsp'), asp);
+  gl.uniform3fv(pSky.u('uTop'), top); gl.uniform3fv(pSky.u('uHor'), hor);
+  gl.uniform3fv(pSky.u('uSun'), sun); gl.uniform3fv(pSky.u('uSunCol'), sunC);
+  gl.bindVertexArray(skyVao); gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  // 3) objek
+  gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.useProgram(pMain);
+  gl.uniformMatrix4fv(pMain.u('uVP'), false, vp); gl.uniformMatrix4fv(pMain.u('uLVP'), false, lvp);
+  gl.uniform3fv(pMain.u('uSun'), sun); gl.uniform3fv(pMain.u('uSunCol'), sunC.map(v => v * pal.sunStrength));
+  gl.uniform3fv(pMain.u('uSkyA'), lin(pal.ambientSky).map(v => v * 0.9)); gl.uniform3fv(pMain.u('uGndA'), lin(pal.ambientGround).map(v => v * 0.8));
+  gl.uniform3fv(pMain.u('uFog'), hor); gl.uniform3fv(pMain.u('uCam'), cam.pos);
+  gl.uniform1f(pMain.u('uFogD'), pal.fogDensity); gl.uniform1f(pMain.u('uTexel'), 1 / SH);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, shTex); gl.uniform1i(pMain.u('uSh'), 1);
+  gl.activeTexture(gl.TEXTURE0); gl.uniform1i(pMain.u('uTex'), 0);
+  for (const o of list) {
+    gl.uniformMatrix4fv(pMain.u('uModel'), false, world(o)); gl.uniform3fv(pMain.u('uColor'), o.rgb);
+    if (o.tex) { gl.bindTexture(gl.TEXTURE_2D, o.tex); gl.uniform1f(pMain.u('uTexOn'), 1); } else gl.uniform1f(pMain.u('uTexOn'), 0);
+    const m = MESH[o.type]; gl.bindVertexArray(m.vao); gl.drawElements(gl.TRIANGLES, m.n, gl.UNSIGNED_SHORT, 0);
+  }
+  gl.bindVertexArray(null);
+
+  // 4) subtitle + label (HTML di atas canvas)
+  const card = (subsData.cards || []).find(c => t >= c.t0 && t < c.t1);
+  subEl.textContent = card ? card.text : '';
+  let html = '';
+  for (const l of scene.labels || []) if (t >= l.t && t < l.t + (l.dur || 2)) {
+    html += `<div class="lab ${l.kind || 'red'}" style="left:${(l.x ?? .5) * W}px;top:${(l.y ?? .22) * H}px;font-size:${H * 0.032}px;padding:${H * 0.008}px ${H * 0.018}px">${l.text}</div>`;
+  }
+  labsEl.innerHTML = html;
+  gl.finish();
+  return true;
+}
+
+window.renderFrame = renderFrame;
+window.__info = { fps: meta.fps, duration: meta.duration || ((subsData.audio_duration || 0) + 0.8) };
+window.__ready = true;
+renderFrame(0);
+})().catch(e => { window.__error = String(e && e.stack || e); console.error(e); });
+</script>
+</body>
+</html>
