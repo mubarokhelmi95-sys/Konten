@@ -15,6 +15,18 @@ function rotW(rig, bone, axis, ang) {
   bone.quaternion.premultiply(_r.setFromAxisAngle(_a, ang));
 }
 
+
+// ---- aksi dari scene.json: "actions": [{"t0":18,"t1":21,"name":"gendong","hop":[3,0.2],"tired":0}] ----
+const actEnv = (a, t) => { const e = clamp01((t - a.t0) / 0.25) * clamp01((a.t1 - t) / 0.25); return e * e * (3 - 2 * e); };
+// pantulan lompat: dy = tinggi di udara, land = 1 saat mendarat (kaki menekuk)
+export function hopState(o, t) {
+  for (const a of o.actions || []) if (a.hop && t >= a.t0 && t < a.t1) {
+    const ph = Math.abs(Math.sin(Math.PI * a.hop[0] * (t - a.t0))), e = actEnv(a, t);
+    return { dy: a.hop[1] * ph * e, land: (1 - ph) * e };
+  }
+  return { dy: 0, land: 0 };
+}
+
 export function makeGesture(getSubs) {
   // 0..1: seberapa "sedang bicara" karakter ini pada waktu t (halus masuk/keluar 0,25 dtk)
   function speakEnv(o, t) {
@@ -38,6 +50,41 @@ export function makeGesture(getSubs) {
     rotW(rig, B.neck, AY, Math.sin(t * T * 0.13 + ph * 1.3) * 0.07 * g);
     rotW(rig, B.head, AZ, Math.sin(t * T * 0.17 + ph * 0.6) * 0.025 * g);
 
+
+    // aksi terjadwal (gendong, lompat, kasih, angkat_bahu)
+    const hs = hopState(o, t);
+    if (rig.baseY === undefined) rig.baseY = rig.m.position.y;
+    let drop = 0;
+    for (const a of o.actions || []) {
+      if (t < a.t0 || t >= a.t1) continue;
+      const e = actEnv(a, t), kk = e * g;
+      if (a.name === 'gendong') {                      // badan condong, tangan ke belakang menahan, lutut menekuk
+        const tired = a.tired || 0, pulse = 0.5 + 0.5 * Math.sin(t * T * 0.9 + ph);
+        const knee = 0.35 + 0.3 * tired * pulse + 0.8 * hs.land;
+        rotW(rig, B.spine, AX, (0.22 + 0.08 * tired) * kk); rotW(rig, B.chest, AX, 0.12 * kk);
+        rotW(rig, B.spine, AZ, Math.sin(t * T * 0.7 + ph) * 0.09 * tired * kk);
+        rotW(rig, B.head, AX, -0.2 * kk); rotW(rig, B.head, AZ, Math.sin(t * T * 0.55) * 0.12 * tired * kk);
+        for (const side of ['l', 'r']) {
+          rotW(rig, B['upperarm' + side], AX, (0.9 + 0.1 * tired * pulse) * kk); rotW(rig, B['forearm' + side], AX, -0.3 * kk);
+          rotW(rig, B['thigh' + side], AX, -knee * kk); rotW(rig, B['shin' + side], AX, (knee * 2) * kk);
+        }
+        drop += 0.9 * (1 - Math.cos(knee)) * kk;
+      } else if (a.name === 'lompat') {                // lompat di tempat (kaki menekuk saat mendarat)
+        const k = (0.15 + 0.6 * hs.land) * kk;
+        for (const side of ['l', 'r']) { rotW(rig, B['thigh' + side], AX, -k); rotW(rig, B['shin' + side], AX, k * 2); }
+        for (const side of ['l', 'r']) rotW(rig, B['upperarm' + side], AZ, (side === 'l' ? 1 : -1) * 0.5 * (1 - hs.land) * kk);
+        drop += 0.9 * (1 - Math.cos(k)) ;
+      } else if (a.name === 'kasih') {                 // mengulurkan tangan kanan memberi sesuatu
+        rotW(rig, B.upperarmr, AX, -1.0 * kk); rotW(rig, B.forearmr, AX, -0.25 * kk);
+        rotW(rig, B.spine, AX, 0.08 * kk);
+      } else if (a.name === 'angkat_bahu') {           // bingung: bahu naik, telapak terbuka, kepala miring
+        rotW(rig, B.claviclel, AZ, 0.22 * kk); rotW(rig, B.clavicler, AZ, -0.22 * kk);
+        rotW(rig, B.forearml, AX, -0.9 * kk); rotW(rig, B.forearmr, AX, -0.9 * kk);
+        rotW(rig, B.upperarml, AZ, 0.25 * kk); rotW(rig, B.upperarmr, AZ, -0.25 * kk);
+        rotW(rig, B.head, AZ, Math.sin(t * T * 0.4) * 0.14 * kk);
+      }
+    }
+    rig.m.position.y = rig.baseY - drop;
     if (!s) return;
     // saat bicara: angguk-angguk kecil, badan sedikit condong, tangan dominan (kanan) menjelaskan,
     // tangan kiri ikut pelan dengan fase berlawanan

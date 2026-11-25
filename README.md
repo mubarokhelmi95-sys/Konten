@@ -106,3 +106,17 @@ Tiga GLB (`GIBRIG_MAN_CURLY`, `GIBRIG_WOMAN_HIJAB`, `GIBRIG_BOY_ORANGE`) adalah 
 Peran lain (nenek, ibu muda, anak masa kecil, warga lewat) memakai prefab dari primitif: `engine/prefabs/{nenek,ibu_muda,bocah,warga}.json`,
 dibuat oleh `python3 tools/make_prefabs.py` (ubah bentuk/warna di situ, lalu jalankan ulang). Pakai di scene:
 `{"id":"x","prefab":"nenek","pos":[0,-0.5,-3],"colors":{"shirt":"#f1e7d2"}}`; bagian yang bisa dianimasikan: `x.arm_r`, `x.arm_l`, `x.leg_l`, `x.leg_r`, `x.mouth` (size).
+
+## Aksi karakter GLB (sesuai narasi)
+
+Karakter GLB hanya punya klip Idle/Wave, jadi gerakan lain dibuat prosedural dari tulangnya. Jadwalkan di objeknya:
+`"actions": [{"t0": 18.12, "t1": 20.75, "name": "gendong", "hop": [3.0, 0.2]}]`
+
+| name | efek | opsi |
+|---|---|---|
+| `gendong` | badan condong, tangan menahan di belakang, lutut menekuk | `hop: [frekuensi Hz, tinggi m]` lompat-lompat; `tired: 1` sempoyongan |
+| `lompat` | lompat di tempat | `hop: [Hz, m]` |
+| `kasih` | ulurkan tangan kanan | |
+| `angkat_bahu` | bingung: bahu naik, telapak terbuka | |
+
+Orang yang digendong dibuat sebagai prefab ber-`parent` ke si penggendong (`ibuTuaG`), sehingga ikut mantul.

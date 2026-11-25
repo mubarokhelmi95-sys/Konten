@@ -42,7 +42,7 @@ window.addEventListener('unhandledrejection', function (e) { console.log('STEP r
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Sky } from 'three/addons/objects/Sky.js';
-import { makeGesture } from './gesture.js';
+import { makeGesture, hopState } from './gesture.js';
 import { buildPost } from './post.js';
 import { applyLook } from './look.js';
 import { mulberry, applyTex } from './proctex.js';
@@ -271,6 +271,7 @@ async function run() {
     for (const o of objs) {
       const n = nodes[o.id], c = cur[o.id];
       n.position.set(...c.pos); n.rotation.set(c.rot[0] * D, c.rot[1] * D, c.rot[2] * D); n.scale.set(...c.size);
+      n.position.y += hopState(o, t).dy;
       n.visible = !o.show || o.show.some(([a, b]) => t >= a && t < b);
     }
     for (const m of mixers) {
