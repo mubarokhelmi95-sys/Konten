@@ -2,6 +2,12 @@
 <html>
 <head>
 <meta charset="utf-8">
+<script>
+console.log('STEP v4: html mulai dimuat');
+window.addEventListener('error', function (e) { console.log('STEP error:', e.message || (e.target && (e.target.src || e.target.href)) || 'resource'); }, true);
+window.addEventListener('unhandledrejection', function (e) { console.log('STEP reject:', String(e.reason && e.reason.stack || e.reason)); });
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -42,6 +48,7 @@ const PROJ = q.get('project') || 'projects/contoh3';
 const W = +q.get('w') || 720, H = +q.get('h') || 1280;
 
 async function run() {
+  console.log('STEP v4: modul jalan, mulai run()');
   const stage = document.getElementById('stage');
   stage.style.width = W + 'px'; stage.style.height = H + 'px';
   const cv = document.getElementById('cv');
@@ -335,8 +342,4 @@ async function run() {
     // hidup terus (napas, geser berat badan, kepala menengok pelan)
     rotW(rig, B.spine, AZ, sw * 0.018 * g); rotW(rig, B.spine, AX, br * 0.012 * g);
     rotW(rig, B.chest, AX, br * 0.016 * g);
-    rotW(rig, B.neck, AY, Math.sin(t * T * 0.13 + ph * 1.3) * 0.07 * g);
-    rotW(rig, B.head, AY, Math.sin(t * T * 0.17 + ph) * 0.09 * g); rotW(rig, B.head, AX, Math.sin(t * T * 0.23 + ph) * 0.025 * g);
-    rotW(rig, B.upperarml, AZ, 0.05 * g + br * 0.01); rotW(rig, B.upperarmr, AZ, -0.05 * g - br * 0.01);
-    if (s > 0) {                                    // lagi bicara: angguk + tangan bergerak
-      const beat = Math.sin(t * T * 1.5 + ph), slow = 0.55 + 0.45 * Ma
+    rotW(rig, B.neck, AY, Math.sin(t * T * 0.13 + ph * 
