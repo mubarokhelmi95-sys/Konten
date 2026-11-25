@@ -73,3 +73,29 @@ Pilih lewat `scene.json`: `"meta": { "engine": "three" }`. Contoh: `projects/con
 - Langit: default langit prosedural. HDRI: `"palette": {"hdri": "assets/langit.hdr"}`.
 - Post: `"meta": {"post": {"ao": true, "bloom": true, "dof": {"aperture": 0.0002, "maxblur": 0.01}}}`. DOF mati kecuali diisi, dan nilainya perlu di-tune.
 - Satuan = meter. Pasang `three` lewat `npm install` (otomatis di workflow).
+
+## Engine three (`"meta": {"engine": "three"}`)
+
+Engine dipecah jadi modul kecil di `engine/` supaya tiap file aman diedit/ditempel (jaga `engine3.html` di bawah ~19 KB;
+file yang melewati 20.000 karakter pernah terpotong diam-diam dan bikin render macet di "masih memuat engine"):
+
+```
+engine/engine3.html   loader scene, objek, animasi, kamera, renderFrame
+engine/gesture.js     napas + gerak tangan/kepala saat karakter bicara ("speaks")
+engine/post.js        AO, DOF, bloom, grade (saturasi, kontras, ketajaman, vignette, grain)
+engine/look.js        tekstur kain/rambut prosedural + bump prop berteksur
+engine/proctex.js     tekstur grass/asphalt/concrete/rubber untuk objek primitif
+```
+
+Look cerah + bertekstur (target dari video referensi: luma rata-rata ~0,57, kontras ~0,24). Atur di `palette`:
+
+| kunci | default | fungsi |
+|---|---|---|
+| `exposure` | 0.9 | terang-gelap keseluruhan (naik = lebih cerah) |
+| `sunIntensity`, `envIntensity`, `hemi` | 3.0, 1.25, 0.55 | cahaya matahari, pantulan langit, cahaya isian |
+| `saturation`, `contrast` | 1.18, 1.1 | warna lebih hidup |
+| `sharpen` | 0.35 | ketajaman tekstur (0 = mati) |
+| `fabricBump`, `fabricFreq` | 2.0, 140 | tonjolan & kerapatan butir kain/rambut karakter (0 = mati) |
+| `propBump` | 0.6 | bump prop latar yang punya tekstur |
+
+Per karakter bisa ditimpa di objeknya: `"fabricBump": 3`.

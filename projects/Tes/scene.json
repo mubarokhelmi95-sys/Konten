@@ -1,6 +1,6 @@
 {
   "meta": {"engine": "three", "fps": 15, "shadowCenter": [0, 0, -3], "shadowSize": 10, "shake": 0.01, "post": {"ao": false, "dof": false}},
-  "palette": {"skyHorizon": "#d9e6f2", "sun": [-0.35, 0.45, 0.85], "sunColor": "#fff0d8", "sunIntensity": 2.4, "envIntensity": 1.0, "exposure": 0.5, "fogDensity": 0.002, "saturation": 1.1},
+  "palette": {"skyHorizon": "#d9e6f2", "sun": [-0.35, 0.45, 0.85], "sunColor": "#fff0d8", "sunIntensity": 3.0, "envIntensity": 1.25, "exposure": 0.9, "hemi": 0.55, "saturation": 1.18, "contrast": 1.1, "sharpen": 0.35, "fabricBump": 2.0, "fabricFreq": 140, "propBump": 0.6},
   "objects": [
     {"id": "bg_room", "glb": "projects/Tes/PROP_BG_LIVINGROOM.glb", "pos": [0, -0.2, 0], "gesture": false},
     {"id": "anak", "glb": "projects/Tes/GIBRIG_MAN_CURLY.glb", "pos": [0.45, -0.5, -3], "rot": [0, -25, 0], "clips": [{"t": 0, "name": "MAN_Idle"}, {"t": 5.19, "name": "MAN_Wave"}, {"t": 6.6, "name": "MAN_Idle"}], "speaks": [[0, 3.17], [5.19, 15.07], [18.12, 20.75], [27.67, 40]], "show": [[0, 15.07], [17.59, 99]]},
