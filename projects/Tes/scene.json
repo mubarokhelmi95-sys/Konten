@@ -10,12 +10,9 @@
   "shadowSize": 10,
   "shake": 0.01,
   "post": {
-   "ao": true,
-   "bloom": true,
-   "dof": {
-    "aperture": 0.00012,
-    "maxblur": 0.006
-   }
+   "ao": false,
+   "bloom": false,
+   "dof": false
   },
   "shadowRes": 2048
  },
@@ -29,17 +26,17 @@
   "sunColor": "#fff4e0",
   "sunIntensity": 2.6,
   "envIntensity": 1.0,
-  "exposure": 0.6,
+  "exposure": 0.8,
   "hemi": 0.4,
   "hemiGround": "#6f9a4a",
   "fogDensity": 0.0015,
   "turbidity": 3,
   "rayleigh": 1.5,
-  "saturation": 1.15,
+  "saturation": 1.2,
   "contrast": 1.12,
   "vignette": 0.2,
-  "sharpen": 0.3,
-  "fabricBump": 2.0,
+  "sharpen": 0.1,
+  "fabricBump": 0.6,
   "fabricFreq": 140,
   "propBump": 0.6
  },
@@ -482,7 +479,8 @@
      "name": "gendong",
      "tired": 1
     }
-   ]
+   ],
+   "fitHeight": 1.75
   },
   {
    "id": "istri",
@@ -530,7 +528,8 @@
      30.54,
      99
     ]
-   ]
+   ],
+   "fitHeight": 1.62
   },
   {
    "id": "anak_kecil",
@@ -585,7 +584,8 @@
       0.16
      ]
     }
-   ]
+   ],
+   "fitHeight": 1.1
   },
   {
    "id": "gaji",
@@ -596,18 +596,20 @@
     -2.7
    ],
    "size": [
-    0.36,
-    0.1,
-    0.22
+    0.3,
+    0.012,
+    0.14
    ],
-   "color": "#2e9b57",
-   "rough": 0.55,
+   "color": "#6fbf8a",
+   "rough": 0.7,
    "show": [
     [
      6.11,
      7.81
     ]
-   ]
+   ],
+   "text": "GAJI",
+   "textColor": "#1f5a3a"
   },
   {
    "id": "cicilan_tiang",
@@ -750,18 +752,20 @@
     -2.6
    ],
    "size": [
-    0.4,
-    0.05,
-    0.25
+    0.34,
+    0.012,
+    0.16
    ],
-   "color": "#2e9b57",
-   "rough": 0.5,
+   "color": "#6fbf8a",
+   "rough": 0.7,
    "show": [
     [
      27.67,
      99
     ]
-   ]
+   ],
+   "text": "Rp 100.000",
+   "textColor": "#1f5a3a"
   },
   {
    "id": "ss_dasar",
