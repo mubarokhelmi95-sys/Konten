@@ -59,6 +59,7 @@ async function run() {
   const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
   const scene = await jget('/' + PROJ + '/scene.json');
+  console.log('STEP scene.json dimuat');
   const subsData = await jget('/' + PROJ + '/subs.json', true) || { cards: [], audio_duration: 0 };
   const meta = Object.assign({ fps: 30 }, scene.meta || {});
   const post = Object.assign({ ao: true, bloom: true, grade: true, dof: { aperture: 0.00012, maxblur: 0.006 } }, meta.post || {});
@@ -95,7 +96,7 @@ async function run() {
   const sun = new THREE.DirectionalLight(new THREE.Color(pal.sunColor), pal.sunIntensity);
   const ctr = new THREE.Vector3(...(meta.shadowCenter || [0, 0, 0]));
   sun.position.copy(ctr).addScaledVector(sunDir, 60); sun.target.position.copy(ctr);
-  sun.castShadow = true; sun.shadow.mapSize.set(4096, 4096);
+  sun.castShadow = true; const SR = meta.shadowRes || 2048; sun.shadow.mapSize.set(SR, SR);
   const ext = meta.shadowSize || 25, sc = sun.shadow.camera;
   sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 1; sc.far = 160;
   sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
@@ -230,6 +231,7 @@ async function run() {
       }
     }
   }
+  console.log('STEP semua GLB dimuat');
   for (const o of objs) (o.parent && nodes[o.parent] ? nodes[o.parent] : scn).add(nodes[o.id]);
   const byId = Object.fromEntries(objs.map(o => [o.id, o]));
 
@@ -337,5 +339,4 @@ async function run() {
     rotW(rig, B.head, AY, Math.sin(t * T * 0.17 + ph) * 0.09 * g); rotW(rig, B.head, AX, Math.sin(t * T * 0.23 + ph) * 0.025 * g);
     rotW(rig, B.upperarml, AZ, 0.05 * g + br * 0.01); rotW(rig, B.upperarmr, AZ, -0.05 * g - br * 0.01);
     if (s > 0) {                                    // lagi bicara: angguk + tangan bergerak
-      const beat = Math.sin(t * T * 1.5 + ph), slow = 0.55 + 0.45 * Math.sin(t * T * 0.62 + ph);
-      rotW(rig, B.head, AX, (0.05 + 0.05 * beat) * s * g); rotW(rig, B.head, AY, Math
+      const beat = Math.sin(t * T * 1.5 + ph), slow = 0.55 + 0.45 * Ma
