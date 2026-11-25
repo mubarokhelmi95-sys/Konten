@@ -99,3 +99,10 @@ Look cerah + bertekstur (target dari video referensi: luma rata-rata ~0,57, kont
 | `propBump` | 0.6 | bump prop latar yang punya tekstur |
 
 Per karakter bisa ditimpa di objeknya: `"fabricBump": 3`.
+
+## Peran: 3 karakter utama + figur tambahan
+
+Tiga GLB (`GIBRIG_MAN_CURLY`, `GIBRIG_WOMAN_HIJAB`, `GIBRIG_BOY_ORANGE`) adalah **peran utama**, masing-masing dipakai untuk satu peran saja.
+Peran lain (nenek, ibu muda, anak masa kecil, warga lewat) memakai prefab dari primitif: `engine/prefabs/{nenek,ibu_muda,bocah,warga}.json`,
+dibuat oleh `python3 tools/make_prefabs.py` (ubah bentuk/warna di situ, lalu jalankan ulang). Pakai di scene:
+`{"id":"x","prefab":"nenek","pos":[0,-0.5,-3],"colors":{"shirt":"#f1e7d2"}}`; bagian yang bisa dianimasikan: `x.arm_r`, `x.arm_l`, `x.leg_l`, `x.leg_r`, `x.mouth` (size).
