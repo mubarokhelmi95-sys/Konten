@@ -61,3 +61,15 @@ Watermark MEN'S GIBRIG / SELERA MUSIK ditaruh sebagai papan (`text`) di dunia 3D
 - Kualitas gaya WebGL sederhana: bayangan, fog, ACES, primitif box/bola/silinder. Belum ada DOF, SSAO, bloom, atau tekstur detail.
 - Subtitle sinkron lewat deteksi hening, akurasi sekitar +-0,3 dtk.
 - Font Poppins diambil dari Google Fonts (runner Actions punya internet). Tanpa internet jatuh ke font sans-serif biasa.
+
+## Engine three.js (realistis, GLB)
+
+Pilih lewat `scene.json`: `"meta": { "engine": "three" }`. Contoh: `projects/contoh3`. Tanpa baris itu dipakai engine WebGL lama.
+
+- Karakter/benda GLB: taruh di `assets/`, lalu `{"id":"hero","glb":"assets/orang.glb","fitHeight":1.75,"pos":[0,0,0],"clips":[{"t":0,"name":"Idle"},{"t":3,"name":"Walk"}]}`.
+  `fitHeight` meter, kaki otomatis menapak y=0. Nama klip dicocokkan tanpa peduli huruf besar/kecil.
+- Lihat isi GLB (nama animasi, ukuran): `node tools/inspect_glb.js assets/orang.glb`.
+- Material: `rough`, `metal`, `glass: true` (kaca transmisi). Bentuk putar: `{"type":"lathe","profile":[[r,y],...]}`.
+- Langit: default langit prosedural. HDRI: `"palette": {"hdri": "assets/langit.hdr"}`.
+- Post: `"meta": {"post": {"ao": true, "bloom": true, "dof": {"aperture": 0.0002, "maxblur": 0.01}}}`. DOF mati kecuali diisi, dan nilainya perlu di-tune.
+- Satuan = meter. Pasang `three` lewat `npm install` (otomatis di workflow).

@@ -1,0 +1,277 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#000;overflow:hidden}
+  #stage{position:relative;overflow:hidden;font-family:'Poppins',system-ui,sans-serif}
+  canvas{display:block;position:absolute;left:0;top:0}
+  #sub{position:absolute;left:0;right:0;text-align:center;color:#fff;font-weight:600;
+       text-shadow:0 2px 10px rgba(0,0,0,.55),0 0 3px rgba(0,0,0,.5);transform:translateY(-50%);white-space:nowrap}
+  .lab{position:absolute;transform:translate(-50%,-50%);color:#fff;font-weight:700;letter-spacing:.02em;
+       border:2px solid #fff;border-radius:6px;white-space:nowrap}
+  .lab.red{background:#d62828}.lab.blue{background:#1d6fd8}.lab.plain{background:rgba(0,0,0,.55)}
+</style>
+<script type="importmap">
+{ "imports": { "three": "/node_modules/three/build/three.module.js",
+               "three/addons/": "/node_modules/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<div id="stage"><canvas id="cv"></canvas><div id="sub"></div><div id="labs"></div></div>
+<script type="module">
+/* ============================================================
+   Engine three.js (PBR + GLB) untuk template MEN'S GIBRIG.
+   Dipilih lewat scene.json: "meta": { "engine": "three" }
+   Format scene.json sama dengan engine WebGL lama, ditambah:
+     - objek GLB:   {"id":"hero","glb":"assets/orang.glb","fitHeight":1.75,"clips":[{"t":0,"name":"Idle"},{"t":3,"name":"Walk"}]}
+     - kaca:        "glass": true  (transmisi, untuk botol)
+     - bentuk putar:{"type":"lathe","profile":[[r,y],...]}
+     - material:    "rough", "metal"
+     - palette:     "hdri": "assets/langit.hdr", "exposure", "sunIntensity", "envIntensity"
+     - meta.post:   {"ao":true,"bloom":true,"dof":{"aperture":0.0002,"maxblur":0.01}}
+   ============================================================ */
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+
+const q = new URLSearchParams(location.search);
+const PROJ = q.get('project') || 'projects/contoh3';
+const W = +q.get('w') || 720, H = +q.get('h') || 1280;
+
+async function run() {
+  const stage = document.getElementById('stage');
+  stage.style.width = W + 'px'; stage.style.height = H + 'px';
+  const cv = document.getElementById('cv');
+  const subEl = document.getElementById('sub');
+  subEl.style.fontSize = (H * 0.037) + 'px'; subEl.style.top = (H * 0.645) + 'px';
+  const labsEl = document.getElementById('labs');
+
+  async function jget(u, optional) {
+    const r = await fetch(u);
+    if (!r.ok) { if (optional) return null; throw new Error(u + ' -> ' + r.status); }
+    return r.json();
+  }
+  const ease = (k, t) => k === 'linear' ? t : t * t * (3 - 2 * t);
+  const clamp01 = x => Math.min(1, Math.max(0, x));
+  const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+  const scene = await jget('/' + PROJ + '/scene.json');
+  const subsData = await jget('/' + PROJ + '/subs.json', true) || { cards: [], audio_duration: 0 };
+  const meta = Object.assign({ fps: 30 }, scene.meta || {});
+  const post = Object.assign({ ao: true, bloom: true }, meta.post || {});
+  const pal = Object.assign({
+    skyHorizon: '#cfe0ee', sun: [-0.45, 0.75, 0.4], sunColor: '#fff2dc', sunIntensity: 2.6,
+    envIntensity: 1, exposure: 0.55, fogDensity: 0.004, turbidity: 4, rayleigh: 1.4, hdri: null,
+  }, scene.palette || {});
+
+  /* ---------- renderer ---------- */
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1); renderer.setSize(W, H, false);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = pal.exposure;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scn = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(45, W / H, 0.05, 2000);
+
+  const sunDir = new THREE.Vector3(...pal.sun).normalize();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  if (pal.hdri) {
+    const { RGBELoader } = await import('three/addons/loaders/RGBELoader.js');
+    const tex = await new RGBELoader().loadAsync('/' + pal.hdri);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    scn.background = tex; scn.environment = pmrem.fromEquirectangular(tex).texture;
+  } else {
+    const sky = new Sky(); sky.scale.setScalar(450000); sky.frustumCulled = false;
+    const u = sky.material.uniforms;
+    u.turbidity.value = pal.turbidity; u.rayleigh.value = pal.rayleigh;
+    u.mieCoefficient.value = 0.005; u.mieDirectionalG.value = 0.8; u.sunPosition.value.copy(sunDir);
+    scn.add(sky); scn.environment = pmrem.fromScene(sky).texture;
+  }
+  if ('environmentIntensity' in scn) scn.environmentIntensity = pal.envIntensity;
+  scn.fog = new THREE.FogExp2(new THREE.Color(pal.skyHorizon), pal.fogDensity);
+
+  const sun = new THREE.DirectionalLight(new THREE.Color(pal.sunColor), pal.sunIntensity);
+  const ctr = new THREE.Vector3(...(meta.shadowCenter || [0, 0, 0]));
+  sun.position.copy(ctr).addScaledVector(sunDir, 60); sun.target.position.copy(ctr);
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  const ext = meta.shadowSize || 25, sc = sun.shadow.camera;
+  sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 1; sc.far = 160;
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+  scn.add(sun, sun.target);
+
+  /* ---------- prefab ---------- */
+  const prefabCache = {};
+  async function prefab(name) {
+    if (!prefabCache[name]) prefabCache[name] = await jget('/engine/prefabs/' + name + '.json');
+    return prefabCache[name];
+  }
+  const objs = [];
+  for (const o of scene.objects || []) {
+    if (!o.prefab) { objs.push(Object.assign({}, o)); continue; }
+    const pf = await prefab(o.prefab);
+    const cols = Object.assign({}, pf.defaults, o.colors);
+    objs.push({ id: o.id, type: 'group', pos: o.pos, rot: o.rot, size: o.size || [1, 1, 1], parent: o.parent, show: o.show });
+    for (const p of pf.parts) {
+      const c = typeof p.color === 'string' && p.color[0] === '$' ? cols[p.color.slice(1)] : p.color;
+      objs.push(Object.assign({}, p, (o.parts || {})[p.id] || {},
+        { id: o.id + '.' + p.id, parent: p.parent ? o.id + '.' + p.parent : o.id, color: c }));
+    }
+  }
+
+  /* ---------- material + geometri ---------- */
+  function textTex(o) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+    const x = c.getContext('2d'); x.fillStyle = o.color || '#ffffff'; x.fillRect(0, 0, 512, 256);
+    x.fillStyle = o.textColor || '#111111'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    let fs = 120; const f = s => `700 ${s}px Poppins, system-ui, sans-serif`;
+    x.font = f(fs); while (x.measureText(o.text).width > 470 && fs > 16) { fs -= 4; x.font = f(fs); }
+    x.fillText(o.text, 256, 132);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+  }
+  function material(o) {
+    if (o.glass) return new THREE.MeshPhysicalMaterial({
+      color: new THREE.Color(o.color || '#ffffff'), roughness: o.rough ?? 0.04, metalness: 0,
+      transmission: 1, thickness: o.thickness ?? 0.02, ior: 1.5, side: THREE.DoubleSide });
+    const m = new THREE.MeshStandardMaterial({ color: new THREE.Color(o.color || '#cccccc'), roughness: o.rough ?? 0.8, metalness: o.metal ?? 0 });
+    if (o.text) { m.map = textTex(o); m.color.set('#ffffff'); }
+    return m;
+  }
+  function geometry(o) {
+    if (o.type === 'box') return new THREE.BoxGeometry(1, 1, 1);
+    if (o.type === 'sphere') return new THREE.SphereGeometry(0.5, 48, 32);
+    if (o.type === 'cyl') return new THREE.CylinderGeometry(0.5, 0.5, 1, 48);
+    if (o.type === 'lathe') return new THREE.LatheGeometry(o.profile.map(p => new THREE.Vector2(p[0], p[1])), 64);
+    return null;
+  }
+  try { await document.fonts.load('700 40px Poppins'); } catch (e) {}
+
+  const nodes = {}, mixers = [];
+  const loader = new GLTFLoader();
+  for (const o of objs) {
+    o.pos = o.pos || [0, 0, 0]; o.rot = o.rot || [0, 0, 0]; o.size = o.size || [1, 1, 1];
+    o.base = { pos: o.pos.slice(), rot: o.rot.slice(), size: o.size.slice() };
+    let node;
+    const g = geometry(o);
+    if (g) { node = new THREE.Mesh(g, material(o)); node.castShadow = true; node.receiveShadow = true; }
+    else node = new THREE.Group();
+    node.rotation.order = 'YXZ';
+    nodes[o.id] = node;
+    if (o.glb) {
+      const gltf = await loader.loadAsync('/' + o.glb);
+      const model = gltf.scene;
+      model.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; c.frustumCulled = false; } });
+      let box = new THREE.Box3().setFromObject(model);
+      if (o.fitHeight) { model.scale.multiplyScalar(o.fitHeight / (box.max.y - box.min.y || 1)); model.updateMatrixWorld(true); box = new THREE.Box3().setFromObject(model); }
+      model.position.y -= box.min.y;
+      if (o.center !== false) { model.position.x -= (box.min.x + box.max.x) / 2; model.position.z -= (box.min.z + box.max.z) / 2; }
+      node.add(model);
+      if (gltf.animations.length) {
+        const clips = o.clips || [{ t: 0, name: o.clip || gltf.animations[0].name }];
+        mixers.push({ mixer: new THREE.AnimationMixer(model), anims: gltf.animations, clips: clips.slice().sort((a, b) => a.t - b.t), speed: o.speed || 1, id: o.id });
+        console.log('GLB', o.glb, 'animasi:', gltf.animations.map(a => a.name).join(', '));
+      }
+    }
+  }
+  for (const o of objs) (o.parent && nodes[o.parent] ? nodes[o.parent] : scn).add(nodes[o.id]);
+  const byId = Object.fromEntries(objs.map(o => [o.id, o]));
+
+  /* ---------- animasi ---------- */
+  function applyTracks(t) {
+    const cur = {};
+    for (const o of objs) cur[o.id] = { pos: o.base.pos.slice(), rot: o.base.rot.slice(), size: o.base.size.slice() };
+    for (const tr of scene.tracks || []) {
+      const c = cur[tr.id]; if (!c) continue;
+      for (const prop of ['pos', 'rot', 'size']) {
+        const ks = tr.keys.filter(k => k[prop]); if (!ks.length) continue;
+        if (t <= ks[0].t) { c[prop] = ks[0][prop].slice(); continue; }
+        const last = ks[ks.length - 1];
+        if (t >= last.t) { c[prop] = last[prop].slice(); continue; }
+        for (let i = 0; i < ks.length - 1; i++) if (t >= ks[i].t && t < ks[i + 1].t) {
+          c[prop] = lerp3(ks[i][prop], ks[i + 1][prop], ease(ks[i + 1].ease || tr.ease || 'inout', (t - ks[i].t) / (ks[i + 1].t - ks[i].t))); break; }
+      }
+    }
+    const D = Math.PI / 180;
+    for (const o of objs) {
+      const n = nodes[o.id], c = cur[o.id];
+      n.position.set(...c.pos); n.rotation.set(c.rot[0] * D, c.rot[1] * D, c.rot[2] * D); n.scale.set(...c.size);
+      n.visible = !o.show || o.show.some(([a, b]) => t >= a && t < b);
+    }
+    for (const m of mixers) {
+      let act = m.clips[0];
+      for (const c of m.clips) if (c.t <= t) act = c;
+      const want = (act.name || '').toLowerCase();
+      const clip = m.anims.find(a => a.name.toLowerCase() === want) || m.anims.find(a => a.name.toLowerCase().includes(want)) || m.anims[0];
+      m.mixer.stopAllAction(); const a = m.mixer.clipAction(clip); a.play();
+      m.mixer.setTime(Math.max(0, t - act.t) * m.speed);
+    }
+  }
+
+  function camAt(t) {
+    const shots = (scene.shots || []).slice().sort((a, b) => a.t - b.t);
+    let s = shots[0];
+    for (const x of shots) if (x.t <= t) s = x;
+    if (!s) return { pos: [6, 3, 8], target: [0, 1, 0], fov: 45 };
+    const a = s.a || s.from, b = s.b || s.to || a;
+    const u = s.dur ? ease(s.ease || 'inout', clamp01((t - s.t) / s.dur)) : 0;
+    return { pos: lerp3(a.pos, b.pos, u), target: lerp3(a.target, b.target, u),
+             fov: (a.fov || 45) + ((b.fov || a.fov || 45) - (a.fov || 45)) * u };
+  }
+
+  /* ---------- post-processing (tiap pass opsional; gagal = dilewati) ---------- */
+  let composer = null, bokeh = null;
+  try {
+    const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js');
+    const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js');
+    const { OutputPass } = await import('three/addons/postprocessing/OutputPass.js');
+    const rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType, samples: 4 });
+    composer = new EffectComposer(renderer, rt);
+    composer.addPass(new RenderPass(scn, cam));
+    if (post.ao) try {
+      const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js');
+      const ao = new GTAOPass(scn, cam, W, H);
+      try { ao.updateGtaoMaterial({ radius: post.aoRadius || 0.4 }); } catch (e) {}
+      composer.addPass(ao);
+    } catch (e) { console.warn('AO dilewati:', e.message); }
+    if (post.dof) try {
+      const { BokehPass } = await import('three/addons/postprocessing/BokehPass.js');
+      bokeh = new BokehPass(scn, cam, { focus: 5, aperture: post.dof.aperture ?? 0.0002, maxblur: post.dof.maxblur ?? 0.01 });
+      composer.addPass(bokeh);
+    } catch (e) { console.warn('DOF dilewati:', e.message); }
+    if (post.bloom) try {
+      const { UnrealBloomPass } = await import('three/addons/postprocessing/UnrealBloomPass.js');
+      composer.addPass(new UnrealBloomPass(new THREE.Vector2(W, H), post.bloomStrength ?? 0.18, 0.6, 0.92));
+    } catch (e) { console.warn('Bloom dilewati:', e.message); }
+    composer.addPass(new OutputPass());
+  } catch (e) { console.warn('Post-processing mati, pakai render biasa:', e.message); composer = null; }
+
+  /* ---------- satu frame ---------- */
+  function renderFrame(t) {
+    applyTracks(t);
+    const c = camAt(t);
+    cam.position.set(...c.pos); cam.fov = c.fov; cam.updateProjectionMatrix(); cam.lookAt(...c.target);
+    if (bokeh) bokeh.uniforms['focus'].value = cam.position.distanceTo(new THREE.Vector3(...c.target));
+    if (composer) {
+      try { composer.render(); } catch (e) { console.warn('composer gagal:', e.message); composer = null; renderer.render(scn, cam); }
+    } else renderer.render(scn, cam);
+
+    const card = (subsData.cards || []).find(k => t >= k.t0 && t < k.t1);
+    subEl.textContent = card ? card.text : '';
+    let html = '';
+    for (const l of scene.labels || []) if (t >= l.t && t < l.t + (l.dur || 2)) {
+      html += `<div class="lab ${l.kind || 'red'}" style="left:${(l.x ?? .5) * W}px;top:${(l.y ?? .22) * H}px;font-size:${H * 0.032}px;padding:${H * 0.008}px ${H * 0.018}px">${l.text}</div>`;
+    }
+    labsEl.innerHTML = html;
+    return true;
+  }
+
+  window.renderFrame = renderFrame;
+  window.__info = { fps: meta.fps, duration: meta.duration || ((subsData.audio_duration || 0) + 0.8) };
+  renderFrame(0);
+  window.__ready = true;
+}
+run().catch(e => { window.__error = String((e && e.stack) || e); console.error(e); });
+</script>
+</body>
+</html>

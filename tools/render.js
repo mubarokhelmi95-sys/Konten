@@ -20,6 +20,9 @@ const W = Math.round((+arg('w', 720)) * scale / 2) * 2;
 const H = Math.round((+arg('h', 1280)) * scale / 2) * 2;
 
 const root = path.resolve(__dirname, '..');
+let sceneMeta = {};
+try { sceneMeta = JSON.parse(fs.readFileSync(path.join(root, project, 'scene.json'), 'utf8')).meta || {}; } catch (e) {}
+const engineFile = arg('engine', sceneMeta.engine === 'three' ? 'engine3' : 'engine');
 const mime = { '.html': 'text/html', '.json': 'application/json', '.js': 'text/javascript', '.png': 'image/png', '.jpg': 'image/jpeg' };
 const server = http.createServer((req, res) => {
   const p = path.join(root, decodeURIComponent(req.url.split('?')[0]));
@@ -37,7 +40,8 @@ const server = http.createServer((req, res) => {
   });
   const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
   page.on('pageerror', e => console.error('PAGEERROR', e.message));
-  await page.goto(`http://127.0.0.1:${port}/engine/engine.html?project=${project}&w=${W}&h=${H}`);
+  page.on('console', m => { const t = m.text(); if (!/Download the|GPU stall|ReadPixels/i.test(t)) console.log('[page]', m.type(), t.slice(0, 300)); });
+  await page.goto(`http://127.0.0.1:${port}/engine/${engineFile}.html?project=${project}&w=${W}&h=${H}`);
   await page.waitForFunction('window.__ready === true || window.__error', null, { timeout: 120000 });
   const err = await page.evaluate('window.__error');
   if (err) { console.error(err); process.exit(1); }
@@ -46,7 +50,7 @@ const server = http.createServer((req, res) => {
   let total = Math.ceil(info.duration * fps / step);
   if (maxFrames) total = Math.min(total, maxFrames);
   fs.mkdirSync(outDir, { recursive: true });
-  console.log(`render ${W}x${H} fps=${fps} step=${step} frames=${total} shard=${shard}/${shards}`);
+  console.log(`engine=${engineFile} render ${W}x${H} fps=${fps} step=${step} frames=${total} shard=${shard}/${shards}`);
   let n = 0;
   for (let k = shard; k < total; k += shards) {
     const t = k * step / fps;
