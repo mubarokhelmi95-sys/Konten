@@ -1,5 +1,5 @@
 {
-  "meta": {"engine": "three", "fps": 30, "shadowCenter": [0, 0, -3], "shadowSize": 10, "shake": 0.01},
+  "meta": {"engine": "three", "fps": 15, "shadowCenter": [0, 0, -3], "shadowSize": 10, "shake": 0.01, "post": {"ao": false, "dof": false}},
   "palette": {"skyHorizon": "#d9e6f2", "sun": [-0.35, 0.45, 0.85], "sunColor": "#fff0d8", "sunIntensity": 2.4, "envIntensity": 1.0, "exposure": 0.5, "fogDensity": 0.002, "saturation": 1.1},
   "objects": [
     {"id": "bg_room", "glb": "projects/Tes/PROP_BG_LIVINGROOM.glb", "pos": [0, -0.2, 0], "gesture": false},
