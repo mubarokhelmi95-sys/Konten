@@ -87,14 +87,14 @@ engine/look.js        tekstur kain/rambut prosedural + bump prop berteksur
 engine/proctex.js     tekstur grass/asphalt/concrete/rubber untuk objek primitif
 ```
 
-Look cerah + bertekstur (target dari video referensi: luma rata-rata ~0,57, kontras ~0,24). Atur di `palette`:
+Look cerah + bertekstur (target dari video referensi: luma rata-rata ~0,57, kontras ~0,24; jangan sampai > ~0,7 = terlalu putih). Atur di `palette`:
 
 | kunci | default | fungsi |
 |---|---|---|
-| `exposure` | 0.9 | terang-gelap keseluruhan (naik = lebih cerah) |
-| `sunIntensity`, `envIntensity`, `hemi` | 3.0, 1.25, 0.55 | cahaya matahari, pantulan langit, cahaya isian |
-| `saturation`, `contrast` | 1.18, 1.1 | warna lebih hidup |
-| `sharpen` | 0.35 | ketajaman tekstur (0 = mati) |
+| `exposure` | 0.6 | terang-gelap keseluruhan (naik = lebih cerah) |
+| `sunIntensity`, `envIntensity`, `hemi` | 2.6, 1.0, 0.4 | cahaya matahari, pantulan langit, cahaya isian |
+| `saturation`, `contrast` | 1.15, 1.12 | warna lebih hidup |
+| `sharpen` | 0.3 | ketajaman tekstur (0 = mati) |
 | `fabricBump`, `fabricFreq` | 2.0, 140 | tonjolan & kerapatan butir kain/rambut karakter (0 = mati) |
 | `propBump` | 0.6 | bump prop latar yang punya tekstur |
 

@@ -75,10 +75,10 @@ async function run() {
   const meta = Object.assign({ fps: 30 }, scene.meta || {});
   const post = Object.assign({ ao: true, bloom: true, grade: true, dof: { aperture: 0.00012, maxblur: 0.006 } }, meta.post || {});
   const pal = Object.assign({
-    skyHorizon: '#cfe0ee', sun: [-0.45, 0.75, 0.4], sunColor: '#fff2dc', sunIntensity: 3.0,
-    envIntensity: 1.25, exposure: 0.9, saturation: 1.18, contrast: 1.1, vignette: 0.18, grain: 0.012,
-    hemi: 0.55, hemiGround: '#8a9a62', fogDensity: 0.002, turbidity: 3, rayleigh: 1.6, hdri: null,
-    gain: 1.0, sharpen: 0.35, fabricBump: 2.0, fabricFreq: 140, propBump: 0.6,
+    skyHorizon: '#cfe0ee', sun: [-0.45, 0.75, 0.4], sunColor: '#fff2dc', sunIntensity: 2.6,
+    envIntensity: 1.0, exposure: 0.6, saturation: 1.15, contrast: 1.12, vignette: 0.2, grain: 0.012,
+    hemi: 0.4, hemiGround: '#6f9a4a', fogDensity: 0.0015, turbidity: 3, rayleigh: 1.5, hdri: null,
+    gain: 1.0, sharpen: 0.3, fabricBump: 2.0, fabricFreq: 140, propBump: 0.6,
   }, scene.palette || {});
 
   /* ---------- renderer ---------- */
