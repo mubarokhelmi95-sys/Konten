@@ -1,0 +1,47 @@
+{
+ "defaults": {
+  "pot": "#b4573a",
+  "daun": "#2f8a3c"
+ },
+ "parts": [
+  {
+   "id": "pot",
+   "type": "cyl",
+   "pos": [
+    0,
+    0.2,
+    0
+   ],
+   "size": [
+    0.5,
+    0.4,
+    0.5
+   ],
+   "color": "$pot",
+   "rough": 0.9,
+   "tex": "concrete",
+   "tile": 1
+  },
+  {
+   "id": "daun",
+   "type": "sphere",
+   "pos": [
+    0,
+    0.65,
+    0
+   ],
+   "size": [
+    0.75,
+    0.7,
+    0.75
+   ],
+   "color": "$daun",
+   "rough": 0.9,
+   "tex": "noise",
+   "repeat": [
+    3,
+    2
+   ]
+  }
+ ]
+}

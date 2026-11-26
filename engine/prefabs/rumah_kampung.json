@@ -1,0 +1,257 @@
+{
+ "defaults": {
+  "dinding": "#dcc093",
+  "atap": "#a8452f",
+  "pintu": "#5e3827",
+  "kusen": "#efe6d2",
+  "kaca": "#7fa8bf",
+  "dasar": "#a39682",
+  "teras": "#b3a690"
+ },
+ "parts": [
+  {
+   "id": "dinding",
+   "type": "box",
+   "pos": [
+    0,
+    1.4,
+    0
+   ],
+   "size": [
+    6.4,
+    2.8,
+    3.5
+   ],
+   "color": "$dinding",
+   "rough": 0.9,
+   "tex": "concrete",
+   "tile": 2
+  },
+  {
+   "id": "plinth",
+   "type": "box",
+   "pos": [
+    0,
+    0.12,
+    0.02
+   ],
+   "size": [
+    6.5,
+    0.24,
+    3.55
+   ],
+   "color": "$dasar",
+   "rough": 0.9,
+   "tex": "concrete",
+   "tile": 2
+  },
+  {
+   "id": "teras",
+   "type": "box",
+   "pos": [
+    0,
+    0.08,
+    2.3
+   ],
+   "size": [
+    6.8,
+    0.16,
+    1.2
+   ],
+   "color": "$teras",
+   "rough": 0.9,
+   "tex": "concrete",
+   "tile": 2
+  },
+  {
+   "id": "atap",
+   "type": "group",
+   "pos": [
+    0,
+    2.8,
+    0
+   ]
+  },
+  {
+   "id": "atap_d",
+   "type": "box",
+   "pos": [
+    0,
+    0.6,
+    1.04
+   ],
+   "size": [
+    7.0,
+    0.16,
+    2.5
+   ],
+   "color": "$atap",
+   "rough": 0.8,
+   "parent": "atap",
+   "rot": [
+    30,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "atap_b",
+   "type": "box",
+   "pos": [
+    0,
+    0.6,
+    -1.04
+   ],
+   "size": [
+    7.0,
+    0.16,
+    2.5
+   ],
+   "color": "$atap",
+   "rough": 0.8,
+   "parent": "atap",
+   "rot": [
+    -30,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "lisplang",
+   "type": "box",
+   "pos": [
+    0,
+    0.02,
+    1.98
+   ],
+   "size": [
+    7.0,
+    0.1,
+    0.06
+   ],
+   "color": "$kusen",
+   "rough": 0.9,
+   "parent": "atap",
+   "rot": [
+    30,
+    0,
+    0
+   ]
+  },
+  {
+   "id": "pintu_kusen",
+   "type": "box",
+   "pos": [
+    -1.5,
+    1.05,
+    1.755
+   ],
+   "size": [
+    1.15,
+    2.1,
+    0.05
+   ],
+   "color": "$kusen",
+   "rough": 0.9
+  },
+  {
+   "id": "pintu",
+   "type": "box",
+   "pos": [
+    -1.5,
+    1.0,
+    1.78
+   ],
+   "size": [
+    0.95,
+    2.0,
+    0.06
+   ],
+   "color": "$pintu",
+   "rough": 0.7
+  },
+  {
+   "id": "knop",
+   "type": "box",
+   "pos": [
+    -1.2,
+    1.0,
+    1.82
+   ],
+   "size": [
+    0.06,
+    0.06,
+    0.05
+   ],
+   "color": "#c9a24a",
+   "rough": 0.3,
+   "metal": 0.8
+  },
+  {
+   "id": "jendela1_kusen",
+   "type": "box",
+   "pos": [
+    0.5,
+    1.6,
+    1.755
+   ],
+   "size": [
+    1.4,
+    1.2,
+    0.05
+   ],
+   "color": "$kusen",
+   "rough": 0.9
+  },
+  {
+   "id": "jendela1",
+   "type": "box",
+   "pos": [
+    0.5,
+    1.6,
+    1.785
+   ],
+   "size": [
+    1.2,
+    1.0,
+    0.04
+   ],
+   "color": "$kaca",
+   "rough": 0.12,
+   "metal": 0.2
+  },
+  {
+   "id": "jendela2_kusen",
+   "type": "box",
+   "pos": [
+    2.1,
+    1.6,
+    1.755
+   ],
+   "size": [
+    1.4,
+    1.2,
+    0.05
+   ],
+   "color": "$kusen",
+   "rough": 0.9
+  },
+  {
+   "id": "jendela2",
+   "type": "box",
+   "pos": [
+    2.1,
+    1.6,
+    1.785
+   ],
+   "size": [
+    1.2,
+    1.0,
+    0.04
+   ],
+   "color": "$kaca",
+   "rough": 0.12,
+   "metal": 0.2
+  }
+ ]
+}

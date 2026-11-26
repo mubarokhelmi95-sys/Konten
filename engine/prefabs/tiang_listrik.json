@@ -1,0 +1,137 @@
+{
+ "defaults": {
+  "tiang": "#6e6a64",
+  "besi": "#4a4743",
+  "trafo": "#5d6b5a",
+  "kabel": "#222222"
+ },
+ "parts": [
+  {
+   "id": "tiang",
+   "type": "cyl",
+   "pos": [
+    0,
+    3.2,
+    0
+   ],
+   "size": [
+    0.2,
+    6.4,
+    0.2
+   ],
+   "color": "$tiang",
+   "rough": 0.8
+  },
+  {
+   "id": "lengan1",
+   "type": "box",
+   "pos": [
+    0,
+    5.9,
+    0
+   ],
+   "size": [
+    1.7,
+    0.1,
+    0.1
+   ],
+   "color": "$besi",
+   "rough": 0.9
+  },
+  {
+   "id": "lengan2",
+   "type": "box",
+   "pos": [
+    0,
+    5.4,
+    0
+   ],
+   "size": [
+    1.3,
+    0.08,
+    0.08
+   ],
+   "color": "$besi",
+   "rough": 0.9
+  },
+  {
+   "id": "trafo",
+   "type": "box",
+   "pos": [
+    0.35,
+    4.5,
+    0.2
+   ],
+   "size": [
+    0.5,
+    0.7,
+    0.4
+   ],
+   "color": "$trafo",
+   "rough": 0.6
+  },
+  {
+   "id": "kabel1",
+   "type": "cyl",
+   "pos": [
+    0,
+    5.95,
+    0
+   ],
+   "size": [
+    0.025,
+    24,
+    0.025
+   ],
+   "color": "$kabel",
+   "rough": 0.9,
+   "rot": [
+    0,
+    0,
+    90
+   ]
+  },
+  {
+   "id": "kabel2",
+   "type": "cyl",
+   "pos": [
+    0,
+    5.95,
+    0.12
+   ],
+   "size": [
+    0.025,
+    24,
+    0.025
+   ],
+   "color": "$kabel",
+   "rough": 0.9,
+   "rot": [
+    0,
+    0,
+    90
+   ]
+  },
+  {
+   "id": "kabel3",
+   "type": "cyl",
+   "pos": [
+    0,
+    5.45,
+    0
+   ],
+   "size": [
+    0.025,
+    24,
+    0.025
+   ],
+   "color": "$kabel",
+   "rough": 0.9,
+   "rot": [
+    0,
+    0,
+    90
+   ]
+  }
+ ]
+}

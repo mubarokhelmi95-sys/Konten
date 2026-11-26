@@ -1,0 +1,44 @@
+{
+ "defaults": {
+  "tembok": "#bdb7a8",
+  "tutup": "#d8d3c6"
+ },
+ "parts": [
+  {
+   "id": "tembok",
+   "type": "box",
+   "pos": [
+    0,
+    0.45,
+    0
+   ],
+   "size": [
+    6.4,
+    0.9,
+    0.16
+   ],
+   "color": "$tembok",
+   "rough": 0.9,
+   "tex": "concrete",
+   "tile": 2
+  },
+  {
+   "id": "tutup",
+   "type": "box",
+   "pos": [
+    0,
+    0.94,
+    0
+   ],
+   "size": [
+    6.6,
+    0.08,
+    0.26
+   ],
+   "color": "$tutup",
+   "rough": 0.9,
+   "tex": "concrete",
+   "tile": 2
+  }
+ ]
+}
