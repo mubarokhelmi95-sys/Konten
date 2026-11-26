@@ -120,3 +120,23 @@ Karakter GLB hanya punya klip Idle/Wave, jadi gerakan lain dibuat prosedural dar
 | `angkat_bahu` | bingung: bahu naik, telapak terbuka | |
 
 Orang yang digendong dibuat sebagai prefab ber-`parent` ke si penggendong (`ibuTuaG`), sehingga ikut mantul.
+
+## Asap & api (engine/fx.js)
+
+Asap/api bukan lagi bola abu-abu; sekarang partikel lunak (ratusan sprite bertekstur turbulensi) yang naik, membesar, memudar, dan terbawa angin.
+Tulis di `scene.json` tingkat atas, kunci `fx` (lihat contoh di `projects/Tes/scene.json`):
+
+- `kind`: `smoke` | `fire`; `pos`; `t0`/`t1` (jendela munculnya); `rate` (partikel/detik); `life`; `size: [awal, akhir]`; `rise` (m/dtk)
+- `wind`: `[x,y,z]` tetap, atau kunci waktu `[[t,[x,y,z]],...]` (angin ke arah rumah tetangga)
+- `colors: [awal, akhir]` (asap: gelap -> terang), `opacity`, `spread`, `swirl`, `seed`
+- api: `light` (kuat cahaya oranye yang berkedip ke sekitar)
+
+## Segitiga di badan karakter
+
+GLB karakter pernah membawa kubus sisa Blender yang ter-skin ke tulang `neutral_bone`, tampil sebagai segitiga putih/biru bergerigi.
+Sudah dibersihkan dengan `python3 tools/clean_glb.py assets/GIBRIG_*.glb` (aman diulang). Jalankan lagi tiap kali GLB baru diekspor dari Blender.
+
+## Truk
+
+`python3 tools/make_truk.py` menulis `engine/prefabs/truk_sampah.json` (kabin, kaca, lampu, grill, ban + pelek, bak ber-rusuk, plat nomor, karung sampah).
+Pakai: `{"id":"truk","prefab":"truk_sampah","pos":[..],"rot":[0,-90,0]}`; warna lewat `colors` (`cab`, `body`, ...).

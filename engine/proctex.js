@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 
 export function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-function valueNoise(cells, rnd) {
+export function valueNoise(cells, rnd) {
   const g = new Float32Array(cells * cells); for (let i = 0; i < g.length; i++) g[i] = rnd();
   return (u, v) => {
     const fx = u * cells, fy = v * cells, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
